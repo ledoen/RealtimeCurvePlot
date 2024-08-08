@@ -21,6 +21,7 @@ private:
     void initCurvePlot();
 private slots:
     void refreshCurve();
+    void onLegendClick(QCPLegend *legend, QCPAbstractLegendItem *item, QMouseEvent *event);
 };
 
 #endif // REALTIMECURVEPLOT_H
