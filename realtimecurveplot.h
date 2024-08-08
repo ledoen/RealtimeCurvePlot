@@ -17,11 +17,16 @@ private:
     int channelCount;
     QCustomPlot* customPlot;
     QTimer replotTimer;
+    QComboBox *displayLenthComboBox;
+    int displayLengthInSecond = 5;
 private:
+    void initLayout();
     void initCurvePlot();
+    void initDisplayLengthComboBox();
 private slots:
     void refreshCurve();
     void onLegendClick(QCPLegend *legend, QCPAbstractLegendItem *item, QMouseEvent *event);
+    void onDisplayLengthChanged(int index);
 };
 
 #endif // REALTIMECURVEPLOT_H

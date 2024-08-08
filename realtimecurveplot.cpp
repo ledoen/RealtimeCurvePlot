@@ -6,6 +6,8 @@ RealtimeCurvePlot::RealtimeCurvePlot(CurvePlotFifo* fifo, int channelCount, QWid
     , fifo(fifo)
     , channelCount(channelCount)
 {
+    initLayout();
+    initDisplayLengthComboBox();
     initCurvePlot();
 
     connect(&replotTimer, SIGNAL(timeout()), this, SLOT(refreshCurve()));
@@ -15,10 +17,6 @@ RealtimeCurvePlot::RealtimeCurvePlot(CurvePlotFifo* fifo, int channelCount, QWid
 /// 初始化plot，配置曲线数，坐标轴等
 void RealtimeCurvePlot::initCurvePlot()
 {
-    customPlot = new QCustomPlot();
-    QHBoxLayout* layout = new QHBoxLayout(this);
-    layout->addWidget(customPlot);
-
     // 根据传入的曲线个数，创建曲线
     for (int var = 0; var < channelCount; ++var)
     {
@@ -52,6 +50,8 @@ void RealtimeCurvePlot::initCurvePlot()
     // 设置legend
     customPlot->legend->setVisible(true);
     customPlot->legend->setSelectableParts(QCPLegend::spItems);
+    customPlot->axisRect()->insetLayout()->setInsetAlignment(0, Qt::AlignLeft | Qt::AlignTop);
+
 
     // 设置legend被点击事件
     connect(customPlot, SIGNAL(legendClick(QCPLegend*,QCPAbstractLegendItem*,QMouseEvent*)), this, SLOT(onLegendClick(QCPLegend*,QCPAbstractLegendItem*,QMouseEvent*)));
@@ -81,7 +81,7 @@ void RealtimeCurvePlot::refreshCurve()
     }
 
     // 显示8s的数据
-    customPlot->xAxis->setRange(key, 8, Qt::AlignRight);
+    customPlot->xAxis->setRange(key, displayLengthInSecond, Qt::AlignRight);
     // rpQueuedReplot表示不立即更新，使用该选项缩放和拖动窗口时曲线变形影响最小
     customPlot->replot(QCustomPlot::rpQueuedReplot);
 
@@ -119,4 +119,45 @@ void RealtimeCurvePlot::onLegendClick(QCPLegend *legend, QCPAbstractLegendItem *
             plItem->setTextColor(graph->visible() ? Qt::black : Qt::gray);
         }
     }
+}
+
+void RealtimeCurvePlot::initDisplayLengthComboBox()
+{
+    displayLenthComboBox->addItem("1s",  1);
+    displayLenthComboBox->addItem("2s",  2);
+    displayLenthComboBox->addItem("5s",  5);
+    displayLenthComboBox->addItem("10s", 10);
+    displayLenthComboBox->addItem("20s", 20);
+    displayLenthComboBox->addItem("40s", 40);
+    displayLenthComboBox->addItem("60s", 60);
+    // 默认设置为5s
+    displayLenthComboBox->setCurrentIndex(2);
+
+    connect(displayLenthComboBox, SIGNAL(currentIndexChanged(int)), this, SLOT(onDisplayLengthChanged(int)));
+}
+
+void RealtimeCurvePlot::initLayout()
+{
+    customPlot = new QCustomPlot();
+
+    // 总布局是一个垂直布局
+    QVBoxLayout* layout = new QVBoxLayout(this);
+
+    //上层layout
+    QHBoxLayout* displayLengthLayout = new QHBoxLayout();
+    QLabel* displayLengthLabel = new QLabel();
+    displayLengthLabel->setText("时间长度");
+    displayLengthLayout->addWidget(displayLengthLabel);
+    displayLenthComboBox = new QComboBox();
+    displayLengthLayout->addWidget(displayLenthComboBox);
+    displayLengthLayout->addStretch();
+
+    // 总layout
+    layout->addLayout(displayLengthLayout);
+    layout->addWidget(customPlot);
+}
+
+void RealtimeCurvePlot::onDisplayLengthChanged(int index)
+{
+    displayLengthInSecond = displayLenthComboBox->itemData(index).toInt();
 }
